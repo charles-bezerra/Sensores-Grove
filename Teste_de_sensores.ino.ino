@@ -24,8 +24,6 @@ private:
         double temperature;
         double pressure;
 };
-
-
 void Barometro::ilustrar(){
             temperature = myBarometer.bmp085GetTemperature(myBarometer.bmp085ReadUT());
             pressure = myBarometer.bmp085GetPressure(myBarometer.bmp085ReadUP());
@@ -37,8 +35,8 @@ void Barometro::ilustrar(){
             Serial.print("Pressure: ");
             Serial.print(pressure, 0); //whole number only.
             Serial.println(" Pa");
-            Serial.println(); 
-  
+            Serial.println();
+
             }
 //////////////////////////////////////////////////////////////////////////////////////
 class UV{
@@ -68,7 +66,7 @@ class Qualidade_Ar : public AirQuality{
 public:
       void ar();
 private:
-      int current_quality =-1;
+      int current_quality = -1;
 
 };
 
@@ -89,11 +87,28 @@ void Qualidade_Ar::ar(){
 //////////////////////////////////////////////////////////////////////////////////////
 
 class LUZ{
-  //OPS:  Não sei a unidade de medida de luz ou como representar!
-  // Não encontrei o datasheet
+public:
+      int intencidade(int pino);
+private:
+      int valor;
+};
+int LUZ::intencidade(int pino){
+      valor = analogRead(pino);
+      Serial.println("======|Sensor de luz|======");
+      Serial.print("intencidade da luz: ");
+      Serial.println(valor);
+      Serial.println("");
+}
+///////////////////////////////////////////////////////////////////////////////////////
+class GPS{
+public:
+
+private:
+
 };
 
-//////////////////////////////////////////////////////////////////////////////////////
+
+
 
 
 
@@ -104,20 +119,21 @@ class LUZ{
 Qualidade_Ar myQualidade_Ar;
 Barometro myBarometro;
 UV myUV;
+LUZ myluz;
 
 //////////////////////////////////////////////////////////////////////////////////////
 byte read_dht11_dat(){
       byte i = 0;
       byte result = 0;
       for(i=0; i< 8; i++){
-         while(!(PINC & _BV(pino_Temp_Humi))); 
+         while(!(PINC & _BV(pino_Temp_Humi)));
               delayMicroseconds(30);
               if(PINC & _BV(pino_Temp_Humi))
                   result |=(1<<(7-i));
         while((PINC & _BV(pino_Temp_Humi))); // wait '1' finish
       }
       return result;
-} 
+}
 
 
 
@@ -164,18 +180,18 @@ void loop(){
           return;
           }
           delayMicroseconds(80);
-  
+
           for (i=0; i<5; i++)
                   dht11_dat[i] = read_dht11_dat();
                   DDRC |= _BV(pino_Temp_Humi);
                   PORTC |= _BV(pino_Temp_Humi);
                   byte dht11_check_sum = dht11_dat[0]+dht11_dat[1]+dht11_dat[2]+dht11_dat[3];
-          
+
                   if(dht11_dat[4]!= dht11_check_sum){
                        Serial.println("DHT11 checksum error");
                   }
 
-          Serial.println("=======Sensor Temperatura e Humidade=======");
+          Serial.println("=====|Sensor Temperatura e Humidade|=====");
           Serial.print("Humidade Atual = ");
           Serial.print(dht11_dat[0], DEC);
           Serial.print(".");
@@ -190,9 +206,9 @@ void loop(){
           Serial.println("");
           myBarometro.ilustrar();
           myUV.uv(pino_UV);
+          myluz.intencidade(pino_luz);
           myQualidade_Ar.ar();
 }
-
 //Esse trecho de código pertence ao censor de qualidade do ar
 ISR(TIMER1_OVF_vect){
 if(airqualitysensor.counter==22)/*set 2 seconds as a detected duty*/
@@ -202,7 +218,7 @@ if(airqualitysensor.counter==22)/*set 2 seconds as a detected duty*/
          airqualitysensor.first_vol=analogRead(pino_Qualidade_Ar);
          airqualitysensor.counter=0;
          airqualitysensor.timer_index=1;
-         PORTB=PORTB^0x20;  
+         PORTB=PORTB^0x20;
          }
          else{ airqualitysensor.counter++; }
 }
